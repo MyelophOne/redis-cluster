@@ -1,0 +1,116 @@
+x-redis-defaults: &redis-defaults
+  image: redis:alpine
+  networks:
+    - redis-net
+  restart: unless-stopped
+  environment:
+    - REDIS_PASSWORD=${REDIS_PASSWORD}
+    - REDIS_MEMORY=${REDIS_MEMORY}
+
+services:
+  redis:
+    <<: *redis-defaults
+    command: >
+      redis-server --port 6379 
+      --cluster-enabled yes 
+      --cluster-config-file nodes.conf 
+      --cluster-node-timeout 5000 
+      --requirepass ${REDIS_PASSWORD} 
+      --masterauth ${REDIS_PASSWORD} 
+      --maxmemory ${REDIS_MEMORY} 
+      --maxmemory-policy allkeys-lru
+    ports:
+      - 6379:6379
+
+  redis-2:
+    <<: *redis-defaults
+    command: >
+      redis-server --port 6380 
+      --cluster-enabled yes 
+      --cluster-config-file nodes.conf 
+      --cluster-node-timeout 5000 
+      --requirepass ${REDIS_PASSWORD} 
+      --masterauth ${REDIS_PASSWORD} 
+      --maxmemory ${REDIS_MEMORY} 
+      --maxmemory-policy allkeys-lru
+    ports:
+      - 6380:6380
+
+  redis-3:
+    <<: *redis-defaults
+    command: >
+      redis-server --port 6381 
+      --cluster-enabled yes 
+      --cluster-config-file nodes.conf 
+      --cluster-node-timeout 5000 
+      --requirepass ${REDIS_PASSWORD} 
+      --masterauth ${REDIS_PASSWORD} 
+      --maxmemory ${REDIS_MEMORY} 
+      --maxmemory-policy allkeys-lru
+    ports:
+      - 6381:6381
+
+  redis-4:
+    <<: *redis-defaults
+    command: >
+      redis-server --port 6382 
+      --cluster-enabled yes 
+      --cluster-config-file nodes.conf 
+      --cluster-node-timeout 5000 
+      --requirepass ${REDIS_PASSWORD} 
+      --masterauth ${REDIS_PASSWORD} 
+      --maxmemory ${REDIS_MEMORY} 
+      --maxmemory-policy allkeys-lru
+    ports:
+      - 6382:6382
+
+  redis-5:
+    <<: *redis-defaults
+    command: >
+      redis-server --port 6383 
+      --cluster-enabled yes 
+      --cluster-config-file nodes.conf 
+      --cluster-node-timeout 5000 
+      --requirepass ${REDIS_PASSWORD} 
+      --masterauth ${REDIS_PASSWORD} 
+      --maxmemory ${REDIS_MEMORY} 
+      --maxmemory-policy allkeys-lru
+    ports:
+      - 6383:6383
+
+  redis-6:
+    <<: *redis-defaults
+    command: >
+      redis-server --port 6384 
+      --cluster-enabled yes 
+      --cluster-config-file nodes.conf 
+      --cluster-node-timeout 5000 
+      --requirepass ${REDIS_PASSWORD} 
+      --masterauth ${REDIS_PASSWORD} 
+      --maxmemory ${REDIS_MEMORY} 
+      --maxmemory-policy allkeys-lru
+    ports:
+      - 6384:6384
+
+  redis-cluster-creator:
+    image: redis:alpine
+    command: >
+      sh -c "echo 'Waiting for Redis nodes...' &&
+             until redis-cli -h redis -p 6379 -a ${REDIS_PASSWORD} ping | grep -q PONG; do sleep 1; done &&
+             echo 'yes' | redis-cli --cluster create redis:6379 redis-2:6380 redis-3:6381 redis-4:6382 redis-5:6383 redis-6:6384 --cluster-replicas 1 -a ${REDIS_PASSWORD}"
+    depends_on:
+      - redis
+      - redis-2
+      - redis-3
+      - redis-4
+      - redis-5
+      - redis-6
+    networks:
+      - redis-net
+    restart: on-failure
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+
+networks:
+  redis-net:
+    driver: bridge
